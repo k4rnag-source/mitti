@@ -4,6 +4,8 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using WpfPoint = System.Windows.Point;
+using WpfMouseEventArgs = System.Windows.Input.MouseEventArgs;
 using System.Windows.Threading;
 using System.Windows.Interop;
 using WinForms = System.Windows.Forms;
@@ -18,7 +20,7 @@ public partial class MainWindow : Window
     readonly Random rng = new();
     bool paused;
     bool dragging;
-    Point dragOffset;
+    WpfPoint dragOffset;
     double velocity = 95;
     DateTime nextDecision = DateTime.UtcNow.AddSeconds(2);
     bool sleeping;
@@ -165,7 +167,7 @@ public partial class MainWindow : Window
         velocity = 0;
     }
 
-    void MouseMoveHandler(object sender, MouseEventArgs e)
+    void MouseMoveHandler(object sender, WpfMouseEventArgs e)
     {
         if (!dragging || e.LeftButton != MouseButtonState.Pressed) return;
         var p = e.GetPosition(null);
