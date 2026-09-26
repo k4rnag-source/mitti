@@ -16,6 +16,7 @@ WizardStyle=modern
 
 [Files]
 Source: "..\artifacts\publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "..\artifacts\WebView2\MicrosoftEdgeWebview2Setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\Mitti"; Filename: "{app}\Mitti.exe"
@@ -25,6 +26,7 @@ Name: "{userdesktop}\Mitti"; Filename: "{app}\Mitti.exe"; Tasks: desktopicon
 Name: "desktopicon"; Description: "Create desktop shortcut"; Flags: unchecked
 
 [Run]
+Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Installing Microsoft Edge WebView2 Runtime..."; Flags: shellexec waituntilterminated skipifsilent
 Filename: "{app}\Mitti.exe"; Description: "Launch Mitti"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
