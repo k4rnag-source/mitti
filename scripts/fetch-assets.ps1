@@ -28,7 +28,7 @@ foreach($item in $wanted) {
     if ($collection -and $collection.Value) {
       foreach($a in @($collection.Value)) {
         $t = Get-Text $a @("title","name")
-        if ($t -eq $item.Title) { $asset = $a; break }
+        if ($t -like ($item.Title + "*")) { $asset = $a; break }
       }
     }
     if ($asset) { break }
