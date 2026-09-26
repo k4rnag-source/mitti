@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+canvas{display:block;width:100%;height:100%}
+</style>
+<script type="importmap">
+{"imports":{"three":"./three.module.min.js"}}
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from './GLTFLoader.js';
+
+const loader = new GLTFLoader();
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(24, innerWidth/innerHeight, .01, 100);
+camera.position.set(0,.82,3.1);
+camera.lookAt(0,.62,0);
+
+const renderer = new THREE.WebGLRenderer({alpha:true,antialias:true,premultipliedAlpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight,false);
+renderer.setClearColor(0,0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x253040,2.2));
+const key = new THREE.DirectionalLight(0xffffff,3.1); key.position.set(2,4,3); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9cc4ff,1.2); rim.position.set(-3,2,-3); scene.add(rim);
+
+const shadow = new THREE.Mesh(
+  new THREE.CircleGeometry(.75,48),
+  new THREE.ShadowMaterial({opacity:.18})
+);
+shadow.rotation.x=-Math.PI/2; shadow.position.y=.005; shadow.receiveShadow=true; scene.add(shadow);
+
+const st={standing:null,sitting:null,lying:null,current:null,mode:'idle',moving:false,paused:false,t:0,yaw:0};
+
+function darken(root){
+  root.traverse(o=>{
+    if(!o.isMesh) return;
+    o.castShadow=true; o.receiveShadow=true;
+    const ms=Array.isArray(o.material)?o.material:[o.material];
+    o.material=ms.map(m=>{
+      const x=m.clone?.()||new THREE.MeshStandardMaterial();
+      x.color=new THREE.Color(.012,.015,.018);
+      x.roughness=.31;
+      x.metalness=0;
+      return x;
+    });
+  });
+  root.scale.setScalar(1.18);
+}
+
+function load(path){
+  return new Promise((resolve,reject)=>loader.load(path,g=>{
+    darken(g.scene); resolve(g.scene);
+  },undefined,reject));
+}
+
+function swap(model){
+  if(!model) return;
+  if(st.current) scene.remove(st.current);
+  st.current=model;
+  st.current.position.set(0,0,0);
+  st.current.rotation.y=st.yaw;
+  scene.add(st.current);
+}
+
+async function init(){
+  try{
+    st.standing=await load('../Assets/3D/standing.glb');
+    st.sitting=await load('../Assets/3D/sitting.glb');
+    st.lying=await load('../Assets/3D/lying.glb');
+    swap(st.standing);
+  }catch(e){
+    console.error(e);
+  }
+}
+
+window.Mitti={
+  start:init,
+  pause:v=>st.paused=!!v,
+  setMoving:v=>st.moving=!!v,
+  setState:s=>{
+    st.mode=s;
+    if(s==='sit') swap(st.sitting);
+    else if(s==='sleep') swap(st.lying);
+    else swap(st.standing);
+  },
+  perch:()=>{st.mode='perch';swap(st.sitting)}
+};
+
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.05,1/60);
+  if(!st.paused&&st.current){
+    st.t+=dt;
+    const bob=st.mode==='sleep'
+      ?Math.sin(st.t*1.4)*.006
+      :st.mode==='sit'
+      ?Math.sin(st.t*2)*.012
+      :st.moving
+      ?Math.abs(Math.sin(st.t*8))*.024
+      :Math.sin(st.t*2.7)*.008;
+    st.current.position.y=bob;
+    st.current.rotation.y=st.yaw+(st.moving?Math.sin(st.t*8)*.01:0);
+    st.current.rotation.z=st.mode==='happy'?Math.sin(st.t*6)*.025:st.current.rotation.z*.9;
+  }
+  renderer.render(scene,camera);
+}
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight,false);
+});
+init();
+frame();
+</script>
+</body>
+</html>
