@@ -67,7 +67,7 @@ public partial class MainWindow : Window
         PetView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
         PetView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
-        PetView.Source = new Uri(Path.Combine(AppContext.BaseDirectory, "web", "index.html")).AbsoluteUri;
+        PetView.Source = new Uri(Path.Combine(AppContext.BaseDirectory, "web", "index.html"));
 
         timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
         timer.Tick += (_, _) => Tick();
