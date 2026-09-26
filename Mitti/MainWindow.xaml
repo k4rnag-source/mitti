@@ -1,0 +1,25 @@
+<Window x:Class="Mitti.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+    Title="Mitti"
+    Width="420"
+    Height="320"
+    WindowStyle="None"
+    ResizeMode="NoResize"
+    AllowsTransparency="True"
+    Background="Transparent"
+    ShowInTaskbar="False"
+    Topmost="True"
+    ShowActivated="False"
+    Loaded="Window_Loaded"
+    Closing="Window_Closing">
+    <Grid Background="Transparent">
+        <wv2:WebView2 x:Name="PetView"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            DefaultBackgroundColor="Transparent"
+            Margin="0"
+            NavigationCompleted="PetView_NavigationCompleted"/>
+    </Grid>
+</Window>
