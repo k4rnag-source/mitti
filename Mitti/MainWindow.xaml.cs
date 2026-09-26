@@ -84,7 +84,7 @@ public partial class MainWindow : Window
             var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mitti");
             Directory.CreateDirectory(logDir);
             File.WriteAllText(Path.Combine(logDir, "startup-error.txt"), lastWebViewError?.ToString() ?? "WebView2 failed to initialize.");
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 "Mitti could not start its 3D engine. Please run the latest Mitti installer again so Microsoft Edge WebView2 Runtime can be installed.",
                 "Mitti startup problem",
                 MessageBoxButton.OK,
