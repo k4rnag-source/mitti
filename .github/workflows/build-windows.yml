@@ -31,6 +31,12 @@ jobs:
           New-Item -ItemType Directory -Force artifacts/publish | Out-Null
           dotnet publish Mitti/Mitti.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/publish
 
+      - name: Download WebView2 Bootstrapper
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force artifacts/WebView2 | Out-Null
+          Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile artifacts/WebView2/MicrosoftEdgeWebview2Setup.exe
+
       - name: Install Inno Setup
         shell: powershell
         run: choco install innosetup -y --no-progress
