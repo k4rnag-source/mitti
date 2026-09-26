@@ -62,8 +62,36 @@ public partial class MainWindow : Window
             "Mitti", "WebView2");
         Directory.CreateDirectory(webProfile);
 
-        var env = await CoreWebView2Environment.CreateAsync(null, webProfile);
-        await PetView.EnsureCoreWebView2Async(env);
+        CoreWebView2Environment? env = null;
+        Exception? lastWebViewError = null;
+        for (var attempt = 1; attempt <= 20; attempt++)
+        {
+            try
+            {
+                env = await CoreWebView2Environment.CreateAsync(null, webProfile);
+                await PetView.EnsureCoreWebView2Async(env);
+                lastWebViewError = null;
+                break;
+            }
+            catch (Exception ex)
+            {
+                lastWebViewError = ex;
+                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(1));
+            }
+        }
+        if (lastWebViewError != null || env == null || PetView.CoreWebView2 == null)
+        {
+            var logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mitti");
+            Directory.CreateDirectory(logDir);
+            File.WriteAllText(Path.Combine(logDir, "startup-error.txt"), lastWebViewError?.ToString() ?? "WebView2 failed to initialize.");
+            MessageBox.Show(
+                "Mitti could not start its 3D engine. Please run the latest Mitti installer again so Microsoft Edge WebView2 Runtime can be installed.",
+                "Mitti startup problem",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            Close();
+            return;
+        }
         PetView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
         PetView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
