@@ -5,30 +5,6 @@ $web = Join-Path $root "Mitti/web"
 New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
 New-Item -ItemType Directory -Force -Path $web | Out-Null
 
-function Find-Url($node, [string]$wantedTitle) {
-  if ($null -eq $node) { return $null }
-  if ($node -is [System.Collections.IEnumerable] -and $node -isnot [string]) {
-    foreach ($child in $node) { $hit = Find-Url $child $wantedTitle; if ($hit) { return $hit } }
-    return $null
-  }
-  $title = $null
-  foreach ($p in $node.PSObject.Properties) {
-    if ($p.Name -in @("title","name","label")) { $title = [string]$p.Value; break }
-  }
-  if ($title -eq $wantedTitle) {
-    foreach ($p in $node.PSObject.Properties) {
-      if ($p.Name -in @("cdnUrl","cdn_url","model_url","downloadUrl","download_url","url")) {
-        $v = [string]$p.Value
-        if ($v -match '^https?://') { return $v }
-      }
-    }
-  }
-  foreach ($p in $node.PSObject.Properties) {
-    if ($p.Value -and $p.Value -isnot [string]) { $hit = Find-Url $p.Value $wantedTitle; if ($hit) { return $hit } }
-  }
-  return $null
-}
-
 $wanted = @(
   @{Title="Retriever Standing"; File="standing.glb"},
   @{Title="Retriever Sitting"; File="sitting.glb"},
@@ -37,13 +13,23 @@ $wanted = @(
 
 foreach($item in $wanted) {
   $q = [uri]::EscapeDataString($item.Title)
-  $result = Invoke-RestMethod -Uri "https://3dassets.dev/api/v1/assets?q=$q&limit=20"
-  $url = Find-Url $result $item.Title
-  if (-not $url) {
-    $fallback = Find-Url $result "Retriever"
-    if ($fallback) { $url = $fallback }
+  $result = Invoke-RestMethod -Uri "https://3dassets.dev/api/v1/assets?q=$q&limit=100"
+  $asset = $null
+  $nodes = @($result.assets, $result.data, $result.results, $result)
+  foreach($n in $nodes) {
+    foreach($a in @($n)) {
+      $t = [string]($a.title ?? $a.name)
+      if ($t -eq $item.Title) { $asset = $a; break }
+    }
+    if ($asset) { break }
   }
-  if (-not $url) { throw "Could not resolve 3D asset URL for $($item.Title)" }
+  if (-not $asset) {
+    $all = ($result | ConvertTo-Json -Depth 12 -Compress)
+    Write-Host "3DAssets response sample: $($all.Substring(0,[Math]::Min(4000,$all.Length)))"
+    throw "Could not resolve 3D asset '$($item.Title)'"
+  }
+  $url = [string]($asset.cdnUrl ?? $asset.cdn_url ?? $asset.downloadUrl ?? $asset.download_url ?? $asset.url)
+  if (-not $url) { throw "Asset '$($item.Title)' has no CDN URL" }
   Write-Host "Downloading $($item.Title) from $url"
   Invoke-WebRequest -Uri $url -OutFile (Join-Path $assetDir $item.File)
 }
