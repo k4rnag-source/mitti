@@ -1,5 +1,5 @@
 #define MyAppName "Mitti"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 
 [Setup]
 AppId={{A8D7F0D0-0A8E-4C61-98B8-A4E3DE51A912}
