@@ -51,10 +51,6 @@ jobs:
       - name: Install npm dependencies
         working-directory: electron
         run: npm install
-
-      - name: Copy Three.js renderer
-        run: node scripts/copy-three.mjs
-
       - name: Check Node sources
         shell: powershell
         run: |
