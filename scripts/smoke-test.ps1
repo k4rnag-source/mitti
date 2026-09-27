@@ -35,6 +35,13 @@ try {
   Write-Host "Mitti smoke test passed."
 }
 finally {
+  $early = Join-Path $env:LOCALAPPDATA "Mitti\early.log"
+  if (Test-Path $early) {
+    Write-Host "==== Mitti early.log ===="
+    Get-Content $early -Tail 120
+    Write-Host "==== End early.log ===="
+  }
+
   if ($p -and -not $p.HasExited) {
     Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
   }
