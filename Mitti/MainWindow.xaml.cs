@@ -100,24 +100,6 @@ public partial class MainWindow : Window
             AppContext.BaseDirectory,
             CoreWebView2HostResourceAccessKind.DenyCors);
 
-        PetView.CoreWebView2.ConsoleMessageReceived += (_, args) =>
-        {
-            try
-            {
-                var logDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Mitti");
-                Directory.CreateDirectory(logDir);
-                File.AppendAllText(
-                    Path.Combine(logDir, "renderer.log"),
-                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {args.MessageLevel}: {args.Message}\\r\\n");
-            }
-            catch
-            {
-                // Best-effort renderer diagnostics only.
-            }
-        };
-
         PetView.Source = new Uri("https://mitti.appassets.test/web/index.html");
 
         timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
@@ -125,8 +107,29 @@ public partial class MainWindow : Window
         timer.Start();
     }
 
-    void PetView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
-        => _ = PetView.ExecuteScriptAsync("window.Mitti?.start?.()");
+    async void PetView_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+    {
+        if (!e.IsSuccess)
+        {
+            var logDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Mitti");
+            Directory.CreateDirectory(logDir);
+            File.AppendAllText(
+                Path.Combine(logDir, "renderer.log"),
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Navigation failed: {e.WebErrorStatus}\\r\\n");
+            return;
+        }
+
+        try
+        {
+            await PetView.ExecuteScriptAsync("window.Mitti?.start?.()");
+        }
+        catch
+        {
+            // Renderer diagnostics are best-effort.
+        }
+    }
 
     void Tick()
     {
