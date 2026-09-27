@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+body{font-family:Segoe UI,Arial,sans-serif}
+canvas{display:block;width:100%;height:100%}
+#fallback{
+  position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;pointer-events:none;
+}
+#fallback svg{width:82%;height:82%;filter:drop-shadow(0 10px 16px rgba(0,0,0,.35))}
+</style>
+<script type="importmap">
+{"imports":{"three":"../node_modules/three/build/three.module.js"}}
+</script>
+</head>
+<body>
+<div id="fallback">
+<svg viewBox="0 0 420 330" aria-hidden="true">
+  <defs>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#353a42"/>
+      <stop offset="1" stop-color="#11151a"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="218" cy="285" rx="108" ry="18" fill="#000" opacity=".24"/>
+  <path d="M104 228c-18-55 6-116 82-126 75-10 133 25 136 84 3 57-30 86-111 86-53 0-96-12-107-44z" fill="url(#fur)"/>
+  <circle cx="310" cy="146" r="54" fill="url(#fur)"/>
+  <path d="M326 105l46-33-22 60zM278 104l-43-30 18 63z" fill="#0e1216"/>
+  <path d="M331 177c-8 20-28 29-48 17 13 27 51 35 69 7 6-10 4-19-21-24z" fill="#0a0c0e"/>
+  <circle cx="329" cy="139" r="8" fill="#eef2f6"/>
+  <circle cx="332" cy="140" r="3" fill="#111"/>
+  <circle cx="306" cy="138" r="8" fill="#eef2f6"/>
+  <circle cx="309" cy="139" r="3" fill="#111"/>
+  <ellipse cx="344" cy="169" rx="9" ry="7" fill="#0a0c0f"/>
+  <path d="M146 276l-6 33h23l11-34M204 281l-1 31h23l4-34M277 277l7 34h23l-8-37" fill="#12161b"/>
+  <path d="M107 164C55 128 48 182 93 199" fill="none" stroke="#11151a" stroke-width="18" stroke-linecap="round"/>
+</svg>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
