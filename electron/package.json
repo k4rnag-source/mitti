@@ -1,0 +1,50 @@
+{
+  "name": "mitti-desktop",
+  "version": "2.0.0",
+  "description": "Mitti — a desktop Labrador companion for Windows",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "build": "electron-builder --win --x64"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "electron": "44.1.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.mitti.desktop",
+    "productName": "Mitti",
+    "artifactName": "MittiSetup-${version}.exe",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "assets/3D/**/*",
+      "node_modules/three/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/MittiProbe",
+        "to": "MittiProbe"
+      }
+    ],
+    "asar": true,
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mitti",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}
