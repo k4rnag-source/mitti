@@ -12,9 +12,6 @@ canvas{display:block;width:100%;height:100%}
 }
 #fallback svg{width:82%;height:82%;filter:drop-shadow(0 10px 16px rgba(0,0,0,.35))}
 </style>
-<script type="importmap">
-{"imports":{"three":"./vendor/three.module.js"}}
-</script>
 </head>
 <body>
 <div id="fallback">
@@ -39,15 +36,6 @@ canvas{display:block;width:100%;height:100%}
   <path d="M107 164C55 128 48 182 93 199" fill="none" stroke="#11151a" stroke-width="18" stroke-linecap="round"/>
 </svg>
 </div>
-<script type="module">
-  window.mitti?.reportRendererReady('boot');
-  import('./app.js').catch(error => {
-    const message = 'Mitti renderer module failed: ' + (error?.stack || error?.message || error);
-    console.error(message);
-    document.getElementById('fallback').style.display = 'flex';
-    window.mitti?.reportRendererError(message);
-    window.mitti?.reportRendererReady('fallback');
-  });
-</script>
+<script type="module" src="./app.js"></script>
 </body>
 </html>
