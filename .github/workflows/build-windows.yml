@@ -12,6 +12,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: electron/package.json
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -21,40 +28,76 @@ jobs:
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File scripts/fetch-assets.ps1
 
-      - name: Restore
-        run: dotnet restore Mitti/Mitti.csproj
-
-      - name: Publish
+      - name: Verify bundled assets
         shell: powershell
         run: |
-          if (Test-Path artifacts) { Remove-Item artifacts -Recurse -Force }
-          New-Item -ItemType Directory -Force artifacts/publish | Out-Null
-          dotnet publish Mitti/Mitti.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/publish
+          $files = @(
+            "Mitti/Assets/3D/standing.glb",
+            "Mitti/Assets/3D/sitting.glb",
+            "Mitti/Assets/3D/lying.glb"
+          )
+          foreach ($f in $files) {
+            if (-not (Test-Path $f)) { throw "Missing asset: $f" }
+            if ((Get-Item $f).Length -lt 10000) { throw "Asset looks too small: $f" }
+          }
+          Write-Host "3D assets present and non-empty."
 
-      - name: Download WebView2 Bootstrapper
+      - name: Prepare Electron assets
         shell: powershell
         run: |
-          New-Item -ItemType Directory -Force artifacts/WebView2 | Out-Null
-          Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile artifacts/WebView2/MicrosoftEdgeWebview2Setup.exe
+          New-Item -ItemType Directory -Force electron/assets/3D | Out-Null
+          Copy-Item Mitti/Assets/3D/*.glb electron/assets/3D/ -Force
 
-      - name: Install Inno Setup
-        shell: powershell
-        run: choco install innosetup -y --no-progress
+      - name: Install npm dependencies
+        working-directory: electron
+        run: npm install
 
-      - name: Build installer
+      - name: Copy Three.js renderer
+        run: node scripts/copy-three.mjs
+
+      - name: Check Node sources
         shell: powershell
         run: |
-          New-Item -ItemType Directory -Force artifacts/installer | Out-Null
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Installer/Mitti.iss
+          node --check electron/main.js
+          node --check electron/preload.js
+          node --check electron/renderer/app.js
+          Write-Host "Node syntax checks passed."
 
-      - name: Upload app
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mitti-Windows
-          path: artifacts/publish
+      - name: Build foreground-window helper
+        shell: powershell
+        run: |
+          dotnet publish ForegroundProbe/ForegroundProbe.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o electron/resources/MittiProbe
+          if (-not (Test-Path electron/resources/MittiProbe/ForegroundProbe.exe)) {
+            throw "Foreground helper was not published."
+          }
+          Rename-Item electron/resources/MittiProbe/ForegroundProbe.exe electron/resources/MittiProbe/MittiWindowProbe.exe
+
+      - name: Build Windows installer
+        working-directory: electron
+        run: npm run build
+
+      - name: Verify installer exists
+        shell: powershell
+        run: |
+          $installer = Get-ChildItem electron/dist/MittiSetup-*.exe | Select-Object -First 1
+          if (-not $installer) { throw "Installer was not created." }
+          if ($installer.Length -lt 50000000) { throw "Installer unexpectedly small: $($installer.Length)" }
+          Write-Host "Installer ready: $($installer.FullName) size=$($installer.Length)"
+
+      - name: Smoke test packaged app
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File scripts/smoke-test.ps1
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: Mitti-Setup
-          path: artifacts/installer/MittiSetup.exe
+          name: Mitti-Final-Windows-Installer
+          path: electron/dist/MittiSetup-*.exe
+          if-no-files-found: error
+
+      - name: Upload unpacked app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mitti-Final-Windows-App
+          path: electron/dist/win-unpacked
+          if-no-files-found: error
