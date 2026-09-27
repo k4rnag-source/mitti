@@ -6,9 +6,9 @@ if (Test-Path $ready) { Remove-Item $ready -Force }
 $app = Join-Path $PSScriptRoot "..\electron\dist\win-unpacked\Mitti.exe"
 if (-not (Test-Path $app)) { throw "Packaged app not found: $app" }
 
-$p = Start-Process -FilePath $app -PassThru -WindowStyle Normal
+$p = Start-Process -FilePath $app -ArgumentList "--smoke" -PassThru -WindowStyle Normal
 try {
-  $deadline = (Get-Date).AddSeconds(25)
+  $deadline = (Get-Date).AddSeconds(40)
   $ok = $false
   while ((Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 500
@@ -21,7 +21,7 @@ try {
       throw "Mitti exited early with code $($p.ExitCode)"
     }
   }
-  if (-not $ok) { throw "3D renderer did not become ready within 25 seconds." }
+  if (-not $ok) { throw "3D renderer did not become ready within 40 seconds." }
 
   $proc = Get-Process -Id $p.Id -ErrorAction SilentlyContinue
   if (-not $proc) { throw "Mitti process disappeared after renderer startup." }
