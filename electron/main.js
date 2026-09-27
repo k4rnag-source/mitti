@@ -11,6 +11,17 @@ const {
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
+const http = require('http');
+const mime = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.glb': 'model/gltf-binary',
+  '.woff2': 'font/woff2'
+};
 
 let win = null;
 let tray = null;
@@ -31,6 +42,8 @@ let stateUntil = 0;
 let currentYaw = 0;
 let probeData = null;
 let lastInteractive = false;
+let staticServer = null;
+let staticPort = 0;
 
 const LOG_DIR = path.join(app.getPath('localAppData'), 'Mitti');
 const LOG_FILE = path.join(LOG_DIR, 'runtime.log');
@@ -310,6 +323,51 @@ function startProbe() {
   }
 }
 
+
+function startStaticServer() {
+  return new Promise((resolve, reject) => {
+    const root = app.getAppPath();
+
+    staticServer = http.createServer((req, res) => {
+      try {
+        const raw = decodeURIComponent((req.url || '/').split('?')[0]);
+        const safePath = raw === '/' ? '/renderer/index.html' : raw;
+        const filePath = path.normalize(path.join(root, safePath));
+
+        if (!filePath.toLowerCase().startsWith(root.toLowerCase() + path.sep) &&
+            filePath.toLowerCase() !== root.toLowerCase()) {
+          res.writeHead(403);
+          res.end('Forbidden');
+          return;
+        }
+
+        fs.stat(filePath, (err, stat) => {
+          if (err || !stat.isFile()) {
+            res.writeHead(404);
+            res.end('Not found');
+            return;
+          }
+
+          const ext = path.extname(filePath).toLowerCase();
+          res.setHeader('Content-Type', mime[ext] || 'application/octet-stream');
+          res.setHeader('Cache-Control', 'no-store');
+          fs.createReadStream(filePath).pipe(res);
+        });
+      } catch (err) {
+        res.writeHead(500);
+        res.end('Server error');
+      }
+    });
+
+    staticServer.on('error', reject);
+    staticServer.listen(0, '127.0.0.1', () => {
+      staticPort = staticServer.address().port;
+      log('Local renderer server listening on 127.0.0.1:' + staticPort);
+      resolve();
+    });
+  });
+}
+
 function createWindow() {
   win = new BrowserWindow({
     width: 430,
@@ -337,7 +395,7 @@ function createWindow() {
 
   win.setAlwaysOnTop(true, 'floating');
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  win.loadURL('http://127.0.0.1:' + staticPort + '/renderer/index.html');
   win.once('ready-to-show', () => {
     const d = screen.getPrimaryDisplay();
     const wb = win.getBounds();
@@ -427,6 +485,7 @@ async function main() {
   app.setAppUserModelId('com.mitti.desktop');
   app.setLoginItemSettings({ openAtLogin: true, path: process.execPath });
 
+  await startStaticServer();
   createWindow();
   createTray();
   registerShortcuts();
@@ -493,6 +552,9 @@ app.on('before-quit', () => {
   globalShortcut.unregisterAll();
   if (probe && !probe.killed) probe.kill();
   if (tray) tray.destroy();
+  if (staticServer) {
+    try { staticServer.close(); } catch {}
+  }
 });
 
 main().catch(err => {
