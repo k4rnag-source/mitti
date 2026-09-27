@@ -13,6 +13,8 @@ Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 WizardStyle=modern
+CloseApplications=yes
+CloseApplicationsFilter=Mitti.exe
 
 [Files]
 Source: "..\artifacts\publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
@@ -24,6 +26,16 @@ Name: "{userdesktop}\Mitti"; Filename: "{app}\Mitti.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create desktop shortcut"; Flags: unchecked
+
+[Code]
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Result := '';
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM Mitti.exe /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(1000);
+end;
 
 [Run]
 Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Installing Microsoft Edge WebView2 Runtime..."; Flags: shellexec waituntilterminated skipifsilent
