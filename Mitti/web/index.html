@@ -43,17 +43,30 @@ const st={standing:null,sitting:null,lying:null,current:null,mode:'idle',moving:
 function darken(root){
   root.traverse(o=>{
     if(!o.isMesh) return;
-    o.castShadow=true; o.receiveShadow=true;
+    o.castShadow=true;
+    o.receiveShadow=true;
     const ms=Array.isArray(o.material)?o.material:[o.material];
     o.material=ms.map(m=>{
       const x=m.clone?.()||new THREE.MeshStandardMaterial();
-      x.color=new THREE.Color(.012,.015,.018);
-      x.roughness=.31;
+      x.color=new THREE.Color(.018,.022,.028);
+      x.roughness=.34;
       x.metalness=0;
       return x;
     });
   });
-  root.scale.setScalar(1.18);
+
+  // The source GLBs use very large world units. Normalize them so the
+  // Labrador actually fits inside the camera frustum.
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 1.85 / Math.max(maxDim, 0.0001);
+
+  root.scale.setScalar(scale);
+  root.position.x -= center.x * scale;
+  root.position.z -= center.z * scale;
+  root.position.y -= box.min.y * scale;
 }
 
 function load(path){
@@ -118,7 +131,6 @@ addEventListener('resize',()=>{
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight,false);
 });
-init();
 frame();
 </script>
 </body>
