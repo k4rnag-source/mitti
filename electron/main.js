@@ -12,6 +12,10 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const http = require('http');
+
+if (process.argv.includes('--smoke')) {
+  app.disableHardwareAcceleration();
+}
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -395,6 +399,14 @@ function createWindow() {
 
   win.setAlwaysOnTop(true, 'floating');
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  win.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedURL) => {
+    log('did-fail-load: ' + errorCode + ' ' + errorDescription + ' ' + validatedURL);
+  });
+  win.webContents.on('did-finish-load', () => {
+    log('Renderer document finished loading.');
+    win.showInactive();
+  });
+
   win.loadURL('http://127.0.0.1:' + staticPort + '/renderer/index.html');
   win.once('ready-to-show', () => {
     const d = screen.getPrimaryDisplay();
