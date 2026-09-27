@@ -67,10 +67,9 @@ jobs:
         shell: powershell
         run: |
           dotnet publish ForegroundProbe/ForegroundProbe.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o electron/resources/MittiProbe
-          if (-not (Test-Path electron/resources/MittiProbe/ForegroundProbe.exe)) {
+          if (-not (Test-Path electron/resources/MittiProbe/MittiWindowProbe.exe)) {
             throw "Foreground helper was not published."
           }
-          Rename-Item electron/resources/MittiProbe/ForegroundProbe.exe electron/resources/MittiProbe/MittiWindowProbe.exe
 
       - name: Build Windows installer
         working-directory: electron
