@@ -14,9 +14,21 @@ const fs = require('fs');
 const http = require('http');
 
 const isSmoke = process.argv.includes('--smoke');
+const earlyLog = path => {
+  try {
+    fs.mkdirSync(path.dirname(path), { recursive: true });
+    fs.appendFileSync(path, '[' + new Date().toISOString() + '] ' + arguments[1] + '\\n');
+  } catch {}
+};
+const EARLY_LOG = require('path').join(process.env.LOCALAPPDATA || process.env.TEMP || '.', 'Mitti', 'early.log');
+
+process.on('uncaughtException', err => earlyLog(EARLY_LOG, 'uncaughtException: ' + (err.stack || err.message)));
+process.on('unhandledRejection', err => earlyLog(EARLY_LOG, 'unhandledRejection: ' + String(err)));
 if (isSmoke) {
   app.disableHardwareAcceleration();
 }
+earlyLog(EARLY_LOG, 'main module loaded');
+
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -399,7 +411,9 @@ function createWindow() {
   });
 
   win.setAlwaysOnTop(true, 'floating');
-  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  if (!isSmoke) {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
   win.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedURL) => {
     log('did-fail-load: ' + errorCode + ' ' + errorDescription + ' ' + validatedURL);
   });
@@ -506,10 +520,14 @@ async function main() {
   app.setLoginItemSettings({ openAtLogin: true, path: process.execPath });
 
   await startStaticServer();
+  earlyLog(EARLY_LOG, 'app ready');
   createWindow();
-  createTray();
-  registerShortcuts();
-  startProbe();
+  if (!isSmoke) {
+    createTray();
+    registerShortcuts();
+    startProbe();
+    app.setLoginItemSettings({ openAtLogin: true, path: process.execPath });
+  }
 
   movementTimer = setInterval(() => {
     if (!win || win.isDestroyed()) return;
