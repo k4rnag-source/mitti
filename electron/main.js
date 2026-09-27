@@ -13,7 +13,8 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const http = require('http');
 
-if (process.argv.includes('--smoke')) {
+const isSmoke = process.argv.includes('--smoke');
+if (isSmoke) {
   app.disableHardwareAcceleration();
 }
 const mime = {
@@ -381,8 +382,8 @@ function createWindow() {
     maxWidth: 430,
     maxHeight: 350,
     frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
+    transparent: !isSmoke,
+    backgroundColor: isSmoke ? '#20252b' : '#00000000',
     hasShadow: false,
     resizable: false,
     movable: true,
@@ -402,12 +403,19 @@ function createWindow() {
   win.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedURL) => {
     log('did-fail-load: ' + errorCode + ' ' + errorDescription + ' ' + validatedURL);
   });
+  win.webContents.on('preload-error', (_, preloadPath, error) => {
+    log('preload-error: ' + preloadPath + ' ' + error);
+  });
+  win.webContents.on('console-message', (_, level, message, line, sourceId) => {
+    log('console[' + level + '] ' + message + ' @ ' + sourceId + ':' + line);
+  });
   win.webContents.on('did-finish-load', () => {
     log('Renderer document finished loading.');
     win.showInactive();
   });
 
   win.loadURL('http://127.0.0.1:' + staticPort + '/renderer/index.html');
+  if (isSmoke) win.show();
   win.once('ready-to-show', () => {
     const d = screen.getPrimaryDisplay();
     const wb = win.getBounds();
