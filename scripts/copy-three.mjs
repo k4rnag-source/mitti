@@ -14,4 +14,10 @@ fs.cpSync(
   path.join(dst, 'jsm'),
   { recursive: true }
 );
-console.log('Three.js renderer assets copied.');
+
+const loaderPath = path.join(dst, 'jsm', 'loaders', 'GLTFLoader.js');
+let loader = fs.readFileSync(loaderPath, 'utf8');
+loader = loader.replaceAll("from 'three'", "from '../../three.module.js'");
+loader = loader.replaceAll('from "three"', 'from "../../three.module.js"');
+fs.writeFileSync(loaderPath, loader);
+console.log('Three.js renderer assets copied and loader imports made local.');
