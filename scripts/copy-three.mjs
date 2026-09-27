@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const src = path.join(root, 'node_modules', 'three');
+const src = path.join(root, 'electron', 'node_modules', 'three');
 const dst = path.join(root, 'electron', 'renderer', 'vendor');
 fs.mkdirSync(dst, { recursive: true });
 fs.copyFileSync(
