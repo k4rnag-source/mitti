@@ -21,7 +21,13 @@ try {
       throw "Mitti exited early with code $($p.ExitCode)"
     }
   }
-  if (-not $ok) { throw "3D renderer did not become ready within 40 seconds." }
+  if (-not $ok) {
+    $log = Join-Path $env:LOCALAPPDATA "Mitti\runtime.log"
+    Write-Host "==== Mitti runtime.log ===="
+    if (Test-Path $log) { Get-Content $log -Tail 120 }
+    Write-Host "==== End runtime.log ===="
+    throw "3D renderer did not become ready within 40 seconds."
+  }
 
   $proc = Get-Process -Id $p.Id -ErrorAction SilentlyContinue
   if (-not $proc) { throw "Mitti process disappeared after renderer startup." }
