@@ -95,7 +95,30 @@ public partial class MainWindow : Window
         PetView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
         PetView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
-        PetView.Source = new Uri(Path.Combine(AppContext.BaseDirectory, "web", "index.html"));
+        PetView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+            "mitti.appassets.test",
+            AppContext.BaseDirectory,
+            CoreWebView2HostResourceAccessKind.DenyCors);
+
+        PetView.CoreWebView2.ConsoleMessageReceived += (_, args) =>
+        {
+            try
+            {
+                var logDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Mitti");
+                Directory.CreateDirectory(logDir);
+                File.AppendAllText(
+                    Path.Combine(logDir, "renderer.log"),
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {args.MessageLevel}: {args.Message}\\r\\n");
+            }
+            catch
+            {
+                // Best-effort renderer diagnostics only.
+            }
+        };
+
+        PetView.Source = new Uri("https://mitti.appassets.test/web/index.html");
 
         timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
         timer.Tick += (_, _) => Tick();
