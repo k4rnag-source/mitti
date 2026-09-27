@@ -135,9 +135,9 @@ async function init() {
   try {
     if (!renderer.getContext()) throw new Error('WebGL is unavailable');
 
-    models.standing = await load('standing', './assets/3D/standing.glb');
-    models.sitting = await load('sitting', './assets/3D/sitting.glb');
-    models.lying = await load('lying', './assets/3D/lying.glb');
+    models.standing = await load('standing', '../assets/3D/standing.glb');
+    models.sitting = await load('sitting', '../assets/3D/sitting.glb');
+    models.lying = await load('lying', '../assets/3D/lying.glb');
 
     addModel('standing');
     window.mitti?.reportRendererReady('3d');
