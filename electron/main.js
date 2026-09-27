@@ -14,10 +14,10 @@ const fs = require('fs');
 const http = require('http');
 
 const isSmoke = process.argv.includes('--smoke');
-const earlyLog = path => {
+const earlyLog = (filePath, message) => {
   try {
-    fs.mkdirSync(path.dirname(path), { recursive: true });
-    fs.appendFileSync(path, '[' + new Date().toISOString() + '] ' + arguments[1] + '\\n');
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.appendFileSync(filePath, '[' + new Date().toISOString() + '] ' + message + '\\n');
   } catch {}
 };
 const EARLY_LOG = require('path').join(process.env.LOCALAPPDATA || process.env.TEMP || '.', 'Mitti', 'early.log');
@@ -62,7 +62,13 @@ let lastInteractive = false;
 let staticServer = null;
 let staticPort = 0;
 
-const LOG_DIR = path.join(app.getPath('localAppData'), 'Mitti');
+const LOG_DIR = path.join(
+  process.env.LOCALAPPDATA ||
+  process.env.APPDATA ||
+  process.env.TEMP ||
+  process.cwd(),
+  'Mitti'
+);
 const LOG_FILE = path.join(LOG_DIR, 'runtime.log');
 const READY_FILE = path.join(LOG_DIR, 'renderer-ready.txt');
 
@@ -517,7 +523,6 @@ function registerShortcuts() {
 async function main() {
   await app.whenReady();
   app.setAppUserModelId('com.mitti.desktop');
-  app.setLoginItemSettings({ openAtLogin: true, path: process.execPath });
 
   await startStaticServer();
   earlyLog(EARLY_LOG, 'app ready');
